@@ -1,23 +1,13 @@
 package ir.noavar.outlet
 
-import androidx.appcompat.app.AppCompatActivity
-import ir.noavar.outlet.ApiService
-import android.widget.Spinner
-import ir.noavar.outlet.R
-import android.widget.TextView
 import android.content.Intent
-import android.view.View
 import android.widget.Button
+import android.widget.Spinner
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import ir.noavar.outlet.LocalActivity
-import ir.noavar.outlet.AddActivity
-import ir.noavar.outlet.switchlist
-import ir.noavar.outlet.FunctionsClass
-import ir.noavar.outlet.MySpinnerAdapter
-import ir.noavar.outlet.ApiService.OnOffCheckRecieved
-import java.util.ArrayList
 
 class MainActivity : AppCompatActivity() {
     private lateinit var apiService: ApiService
@@ -61,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         btn_local.setOnClickListener {
             startActivity(
                 Intent(
-                    this@MainActivity,
+                    this,
                     LocalActivity::class.java
                 )
             )
@@ -69,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         fab.setOnClickListener {
             startActivity(
                 Intent(
-                    this@MainActivity,
+                    this,
                     AddActivity::class.java
                 )
             )
@@ -78,23 +68,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setSearchLayout() {
-        val switchList: List<switchlist>? = null /*dataBaseOpenHelper.getSwitchList();*/
-        val switch1: MutableList<String> = ArrayList()
-        switch1.add("انتخاب کنید")
-        for (i in 1 until switchList!!.size) {
-            switch1.add(FunctionsClass.numToFarsi(switchList[i].nameId))
+
+        val switch1 = mutableListOf("انتخاب کنید")
+        for (i in 1 until devices.size) {
+            switch1.add(FunctionsClass.numToFarsi(devices[i].name))
         }
         val adapter = MySpinnerAdapter(this, android.R.layout.simple_spinner_dropdown_item, switch1)
         switchlist.adapter = adapter
     }
 
     private fun setonoff(sn: String?, pass: String?, status: String) {
-        apiService = ApiService(this@MainActivity)
+        apiService = ApiService(this)
         apiService.setOnOff(sn, pass, status) { ok: String, msg: String? ->
             if (ok.equals("true", ignoreCase = true)) {
-                FunctionsClass.showErrorSnak(this@MainActivity, FunctionsClass.getServerErrors(msg))
+                FunctionsClass.showErrorSnak(this, FunctionsClass.getServerErrors(msg))
             } else {
-                FunctionsClass.showErrorSnak(this@MainActivity, FunctionsClass.getServerErrors(msg))
+                FunctionsClass.showErrorSnak(this, FunctionsClass.getServerErrors(msg))
             }
         }
     }

@@ -3,10 +3,10 @@
     package="ir.noavar.outlet">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:name="ir.noavar.outlet.MyApplication"
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="پریز هوشمند"
@@ -15,12 +15,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name="ir.noavar.outlet.LocalActivity" />
+        <activity android:name=".LocalActivity" />
         <activity
-            android:name="ir.noavar.outlet.AddActivity"
+            android:name=".AddActivity"
             android:label="افزودن" />
         <activity
-            android:name="ir.noavar.outlet.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
