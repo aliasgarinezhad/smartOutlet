@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4aa3df</color>
+    <color name="colorPrimaryDark">#258cd1</color>
+    <color name="colorAccent">#3498db</color>
+
+    <color name="colorZamine">#c4e2ff</color>
+    <color name="colorSearch">#45a0de</color>
+    <color name="colorTextWithe">#ffffff</color>
+    <color name="colorTextStanard">#200000</color>
+    <color name="colorTextHover">#115293</color>
+    <color name="colorTextGray">#838484</color>
+    <color name="colorTextGraydark">#707070</color>
+    <color name="colorTextLight">#f2f2f2</color>
+
+    <color name="colorHeaderLight">#ffffff</color>
+    <color name="colorHeaderLightBg">#e1e1e1</color>
+    <color name="colorHeaderDarkBg">#bdc3c7</color>
+    <color name="colorBoxBg">#ecf0f1</color>
+
+    <color name="colorBtnPosetive">#3498db</color>
+    <color name="colorBtnPosetivePressed">#217dbb</color>
+
+    <color name="colorBtnNegative">#d62c00</color>
+    <color name="colorBtnNegativePressed">#d62c1a</color>
+
+    <color name="colorBtnGreen">#2ecc71</color>
+    <color name="colorBtnGreenPressed">#25a25a</color>
+
+    <color name="satlZobale">#55aae1</color>
+    <color name="colorDasbordOrange">#ff622c</color>
+    <color name="colorDasbordYellow">#ffc82c</color>
+    <color name="colorDasbordPerpule">#8e44ad</color>
+    <color name="colorDasbordGreen">#27ae60</color>
+
+
+    <color name="color1">#ffffff</color>
+    <color name="color2">#c4f9d4</color>
+    <color name="color3">#adf7c2</color>
+    <color name="color4">#66cdaa</color>
+    <color name="color5">#40e0d0</color>
+    <color name="color6">#c3ff00</color>
+    <color name="color7">#00ff21</color>
+    <color name="color8">#00ff6e</color>
+    <color name="color9">#00ffcb</color>
+    <color name="color10">#f0f7ef</color>
+    <color name="color11">#edf6e9</color>
+    <color name="color12">#d6d6d6</color>
+    <color name="color13">#cecece</color>
+    <color name="color14">#d1cac0</color>
+    <color name="color15">#a7d9fa</color>
+    <color name="color16">#86c5da</color>
+    <color name="color17">#a5eeef</color>
+    <color name="color18">#00edff</color>
+    <color name="color19">#718da5</color>
+    <color name="color20">#5a80b4</color>
+    <color name="color21">#0099ff</color>
+    <color name="color22">#0079cf</color>
+    <color name="color23">#0043ff</color>
+    <color name="color24">#eeff00</color>
+    <color name="color25">#ffe638</color>
+    <color name="color26">#ffe062</color>
+    <color name="color27">#ffcd55</color>
+    <color name="color28">#fdbb1c</color>
+    <color name="color29">#ff00ee</color>
+    <color name="color30">#bf00ff</color>
+    <color name="color31">#fa959f</color>
+    <color name="color32">#f6546a</color>
+    <color name="color33">#ff1a72</color>
+    <color name="color34">#ff0000</color>
+    <color name="color35">#ff4800</color>
+    <color name="color36">#db0000</color>
+    <color name="color37">#c92c2c</color>
+
+    <array name="androidcolors">
+        <item>@color/color1</item>
+        <item>@color/color2</item>
+        <item>@color/color3</item>
+        <item>@color/color4</item>
+        <item>@color/color5</item>
+        <item>@color/color6</item>
+        <item>@color/color7</item>
+        <item>@color/color8</item>
+        <item>@color/color9</item>
+        <item>@color/color10</item>
+        <item>@color/color11</item>
+        <item>@color/color12</item>
+        <item>@color/color13</item>
+        <item>@color/color14</item>
+        <item>@color/color15</item>
+        <item>@color/color16</item>
+        <item>@color/color17</item>
+        <item>@color/color18</item>
+        <item>@color/color19</item>
+        <item>@color/color20</item>
+        <item>@color/color21</item>
+        <item>@color/color22</item>
+        <item>@color/color23</item>
+        <item>@color/color24</item>
+        <item>@color/color25</item>
+        <item>@color/color26</item>
+        <item>@color/color27</item>
+        <item>@color/color28</item>
+        <item>@color/color29</item>
+        <item>@color/color30</item>
+        <item>@color/color31</item>
+        <item>@color/color32</item>
+        <item>@color/color33</item>
+        <item>@color/color34</item>
+        <item>@color/color35</item>
+        <item>@color/color36</item>
+        <item>@color/color37</item>
+    </array>
+
+    <color name="scolor11"></color>
+    <color name="scolor1">#a8a8a8</color>
+    <color name="scolor2">#FFFFFF</color>
+    <color name="scolor3">#ffff4d</color>
+    <color name="scolor4">#00b200</color>
+    <color name="scolor5">#0000FF</color>
+    <color name="scolor6">#901cd8</color>
+    <color name="scolor7">#e50000</color>
+    <color name="scolor8">#a8a8a8</color>
+    <color name="scolor9">#FFFFFF</color>
+    <color name="scolor10">#ffff4d</color>
+    <color name="scolor12">#00b200</color>
+    <color name="scolor13">#0000FF</color>
+    <color name="scolor14">#901cd8</color>
+    <color name="scolor15">#e50000</color>
+    <color name="scolor16">#a8a8a8</color>
+    <color name="scolor17">#FFFFFF</color>
+    <color name="scolor18">#ffff4d</color>
+    <color name="scolor19">#00b200</color>
+    <color name="scolor20">#0000FF</color>
+    <color name="scolor21">#901cd8</color>
+    <color name="scolor22">#e50000</color>
+
+    <array name="selectorcolors">
+        <item>@color/scolor11</item>
+        <item>@color/scolor1</item>
+        <item>@color/scolor2</item>
+        <item>@color/scolor3</item>
+        <item>@color/scolor4</item>
+        <item>@color/scolor5</item>
+        <item>@color/scolor6</item>
+        <item>@color/scolor7</item>
+        <item>@color/scolor8</item>
+        <item>@color/scolor9</item>
+        <item>@color/scolor10</item>
+        <item>@color/scolor12</item>
+        <item>@color/scolor13</item>
+        <item>@color/scolor14</item>
+        <item>@color/scolor15</item>
+        <item>@color/scolor16</item>
+        <item>@color/scolor17</item>
+        <item>@color/scolor18</item>
+        <item>@color/scolor19</item>
+        <item>@color/scolor20</item>
+        <item>@color/scolor21</item>
+        <item>@color/scolor22</item>
+    </array>
+
+
+    <color name="etmatn1">#FFFFFF</color>
+    <color name="etmatn2">#200000</color>
+    <color name="etmatn3">#ffff4d</color>
+    <color name="etmatn4">#ff0000</color>
+
+
+    <array name="colorsetcart">
+        <item>@color/etmatn1</item>
+        <item>@color/etmatn2</item>
+        <item>@color/etmatn3</item>
+        <item>@color/etmatn4</item>
+    </array>
+</resources>

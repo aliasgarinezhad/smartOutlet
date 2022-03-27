@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="Small_cart_w_Margin">5dp</dimen>
+    <dimen name="Small_cart_h_Margin">2dp</dimen>
+    <dimen name="Small_Margin">4dp</dimen>
+    <dimen name="Standard_Margin">8dp</dimen>
+    <dimen name="Standard_Margin_X2">16dp</dimen>
+    <dimen name="Standard_Margin_half_half">2dp</dimen>
+    <dimen name="Standard_Margin_half">4dp</dimen>
+    <dimen name="Standard_Margin_x4">32dp</dimen>
+    <dimen name="Standard_Margin_x6">50dp</dimen>
+
+    <dimen name="Standard_Cart_Font_Size">12sp</dimen>
+    <dimen name="Standard_Font_Size">14sp</dimen>
+    <dimen name="Large_Font_Size">20sp</dimen>
+    <dimen name="Small_Font_Size">10sp</dimen>
+    <dimen name="Middle_Font_Size">12sp</dimen>
+    <dimen name="Standard_Font_Size_dp">14dp</dimen>
+    <dimen name="Larg_Font_Size_dp">20dp</dimen>
+
+    <dimen name="Large_Radius">80dp</dimen>
+    <dimen name="Large_Standard_Radius">20dp</dimen>
+    <dimen name="Standard_Radius">10dp</dimen>
+    <dimen name="Standard_Shadow">3dp</dimen>
+
+    <dimen name="Standard_btn_height">40dp</dimen>
+    <dimen name="Standard_Float_Button">50dp</dimen>
+    <dimen name="Standard_Float_Button_Radius">25dp</dimen>
+
+    <dimen name="Nav_width">300dp</dimen>
+    <dimen name="list_image_size">130dp</dimen>
+    <dimen name="list_image_size_normal">100dp</dimen>
+    <dimen name="list_image_size_large">125dp</dimen>
+    <dimen name="list_image_size_smal">70dp</dimen>
+    <dimen name="user_list_image_size">90dp</dimen>
+    <dimen name="kala_image_height">210dp</dimen>
+    <dimen name="Music_Player_Seekbar_Margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+</resources>
