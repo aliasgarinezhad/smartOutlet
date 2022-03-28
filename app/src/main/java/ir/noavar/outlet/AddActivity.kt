@@ -1,5 +1,6 @@
 package ir.noavar.outlet
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
@@ -14,13 +15,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import ir.noavar.outlet.ui.theme.MyApplicationTheme
+import org.json.JSONObject
 
 class AddActivity : AppCompatActivity() {
 
-    private lateinit var apiService: ApiService
     private var devices = mutableListOf<Device>()
 
     private var serialNumber by mutableStateOf("")
@@ -35,26 +40,44 @@ class AddActivity : AppCompatActivity() {
         loadFromMemory()
     }
 
-    private fun checkUserPass(sn: String, pass: String, name: String) {
-        apiService = ApiService(this@AddActivity)
-        apiService.checkUserPass(sn, pass) { ok: String, msg: String ->
-            if (ok.equals("true", ignoreCase = true)) {
+    private fun addNewDevice(serialNumber: String, password: String, name: String) {
 
+        val apiUrl = "https://mamatirnoavar.ir/switchs/user_ma.php"
+
+        val jsonObject = JSONObject()
+        jsonObject.put("sn", serialNumber)
+        jsonObject.put("pass", password)
+        jsonObject.put("request_type", "checkuserpassswitch")
+
+        val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
+
+            val ok = it.getString("ok")
+            val msg = it.getString("result")
+            if (ok.equals("true", ignoreCase = true)) {
                 devices.add(
                     Device(
-                        serialNumber = sn,
-                        password = pass,
+                        serialNumber = serialNumber,
+                        password = password,
                         name = name
                     )
                 )
                 saveToMemory()
-
-                FunctionsClass.showErrorSnak(this@AddActivity, FunctionsClass.getServerErrors(msg))
+                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
+                startActivity(Intent(this, LocalActivity::class.java))
 
             } else {
-                FunctionsClass.showErrorSnak(this@AddActivity, FunctionsClass.getServerErrors(msg))
+                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
             }
-        }
+        }, {
+            FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors("1000"))
+        })
+
+        jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
+            8000,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+        Volley.newRequestQueue(this).add(jsonArrayRequest)
     }
 
     private fun saveToMemory() {
@@ -104,7 +127,18 @@ class AddActivity : AppCompatActivity() {
             DevicePasswordTextField()
             DeviceNameTextField()
             Button(
-                onClick = { checkUserPass(serialNumber, password, name) },
+                onClick = {
+                    addNewDevice(serialNumber, password, name)
+                    devices.add(
+                        Device(
+                            serialNumber = "78945",
+                            password = "6789",
+                            name = "یخچال",
+                            status = false
+                        )
+                    )
+                    saveToMemory()
+                },
                 modifier = Modifier
                     .padding(top = 20.dp)
                     .align(Alignment.CenterHorizontally)

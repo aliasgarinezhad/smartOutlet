@@ -1,100 +1,203 @@
 package ir.noavar.outlet
 
 import android.content.Intent
-import android.widget.Button
-import android.widget.Spinner
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import ir.noavar.outlet.ui.theme.MyApplicationTheme
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var apiService: ApiService
-    private lateinit var btn_on: Button
-    private lateinit var btn_off: Button
-    private lateinit var btn_local: Button
-    private lateinit var switchlist: Spinner
-    private var devices = mutableListOf<Device>()
+
+    private var devices = mutableStateListOf<Device>()
 
     override fun onResume() {
         super.onResume()
-        setContentView(R.layout.activity_main)
-        switchlist = findViewById(R.id.am_sp_sw)
-        btn_on = findViewById(R.id.main_btn_on)
-        btn_off = findViewById(R.id.main_btn_off)
-        btn_local = findViewById(R.id.main_btn_local)
-        val fab = findViewById<TextView>(R.id.fab)
+
+        setContent {
+            Page()
+        }
 
         loadFromMemory()
-
-        btn_on.setOnClickListener {
-
-            val deviceIndex = devices.indexOfLast {
-                it.name == FunctionsClass.numToEnglish(
-                    switchlist.selectedItem.toString()
-                )
-            }
-
-            setonoff(devices[deviceIndex].serialNumber, devices[deviceIndex].password, "1")
-        }
-        btn_off.setOnClickListener {
-
-            val deviceIndex = devices.indexOfLast {
-                it.name == FunctionsClass.numToEnglish(
-                    switchlist.selectedItem.toString()
-                )
-            }
-
-            setonoff(devices[deviceIndex].serialNumber, devices[deviceIndex].password, "0")
-        }
-        btn_local.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
-                    LocalActivity::class.java
-                )
-            )
-        }
-        fab.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
-                    AddActivity::class.java
-                )
-            )
-        }
-        setSearchLayout()
     }
 
-    fun setSearchLayout() {
+    private fun setOnOff(serialNumber: String, password: String, status: String) {
 
-        val switch1 = mutableListOf("انتخاب کنید")
-        for (i in 1 until devices.size) {
-            switch1.add(FunctionsClass.numToFarsi(devices[i].name))
-        }
-        val adapter = MySpinnerAdapter(this, android.R.layout.simple_spinner_dropdown_item, switch1)
-        switchlist.adapter = adapter
-    }
+        val apiUrl = "https://mamatirnoavar.ir/switchs/user_ma.php"
+        val jsonObject = JSONObject()
+        jsonObject.put("sn", serialNumber)
+        jsonObject.put("pass", password)
+        jsonObject.put("status", status)
+        jsonObject.put("request_type", "setonoff")
 
-    private fun setonoff(sn: String?, pass: String?, status: String) {
-        apiService = ApiService(this)
-        apiService.setOnOff(sn, pass, status) { ok: String, msg: String? ->
+        val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
+
+            val ok = it.getString("ok")
+            val msg = it.getString("result")
+
             if (ok.equals("true", ignoreCase = true)) {
-                FunctionsClass.showErrorSnak(this, FunctionsClass.getServerErrors(msg))
+
+                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
+
+                val deviceIndex = devices.indexOfLast { it1 ->
+                    it1.serialNumber == serialNumber
+                }
+                devices[deviceIndex].status = status.toBoolean()
+                val temp = mutableListOf<Device>()
+                temp.addAll(devices)
+                devices.clear()
+                devices.addAll(temp)
+                saveToMemory()
             } else {
-                FunctionsClass.showErrorSnak(this, FunctionsClass.getServerErrors(msg))
+                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
             }
         }
+        ) {
+            FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors("1000"))
+        }
+        jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
+            8000,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+        Volley.newRequestQueue(this).add(jsonArrayRequest)
     }
 
     private fun loadFromMemory() {
 
-        val type = object : TypeToken<List<Device>>() {}.type
+        val type = object : TypeToken<SnapshotStateList<Device>>() {}.type
         val memory = PreferenceManager.getDefaultSharedPreferences(this)
         devices = Gson().fromJson(
             memory.getString("devices", ""),
             type
-        ) ?: mutableListOf()
+        ) ?: mutableStateListOf()
+    }
+
+    private fun saveToMemory() {
+
+        val memory = PreferenceManager.getDefaultSharedPreferences(this)
+        val memoryEditor = memory.edit()
+
+        memoryEditor.putString("devices", Gson().toJson(devices).toString())
+
+        memoryEditor.apply()
+    }
+
+    @Composable
+    fun Page() {
+        MyApplicationTheme {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                Scaffold(
+                    topBar = { AppBar() },
+                    content = { Content() },
+                    floatingActionButton = { OpenCheckInButton() },
+                    floatingActionButtonPosition = FabPosition.Center
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun Content() {
+
+        Column {
+
+            LazyColumn(modifier = Modifier.padding(top = 8.dp)) {
+                items(devices.size) { i ->
+                    LazyColumnItem(i)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun LazyColumnItem(i: Int) {
+        Row(
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                .background(
+                    MaterialTheme.colors.onPrimary,
+                    shape = MaterialTheme.shapes.small
+                )
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = "نام: " + devices[i].name,
+                modifier = Modifier
+                    .weight(1F)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 16.dp)
+            )
+            Text(
+                text = "وضعیت: " + if (!devices[i].status) "خاموش" else "روشن",
+                modifier = Modifier
+                    .weight(1F)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 16.dp)
+            )
+
+            Switch(
+                modifier = Modifier
+                    .weight(1F)
+                    .padding(start = 16.dp),
+                checked = devices[i].status,
+                onCheckedChange = {
+                    if (it) {
+                        setOnOff(devices[i].serialNumber, devices[i].password, "1")
+                    } else {
+                        setOnOff(devices[i].serialNumber, devices[i].password, "0")
+                    }
+                })
+        }
+    }
+
+    @Composable
+    fun AppBar() {
+
+        TopAppBar(
+
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "لیست دستگاه ها", textAlign = TextAlign.Center,
+                    )
+                }
+            },
+        )
+    }
+
+    @Composable
+    fun OpenCheckInButton() {
+        ExtendedFloatingActionButton(
+            onClick = { startActivity(Intent(this, AddActivity::class.java)) },
+            text = { Text("اضافه کردن") },
+            icon = { Icon(Icons.Filled.Add, contentDescription = "") },
+            backgroundColor = MaterialTheme.colors.primary,
+            contentColor = MaterialTheme.colors.onPrimary
+        )
     }
 }
