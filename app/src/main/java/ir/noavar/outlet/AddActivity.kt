@@ -16,12 +16,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
 import com.android.volley.DefaultRetryPolicy
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import ir.noavar.outlet.ui.theme.CustomSnackBar
 import ir.noavar.outlet.ui.theme.MyApplicationTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class AddActivity : AppCompatActivity() {
@@ -31,6 +36,7 @@ class AddActivity : AppCompatActivity() {
     private var serialNumber by mutableStateOf("")
     private var password by mutableStateOf("")
     private var name by mutableStateOf("")
+    private var state = SnackbarHostState()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,9 +57,48 @@ class AddActivity : AppCompatActivity() {
 
         val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
 
-            val ok = it.getString("ok")
-            val msg = it.getString("result")
-            if (ok.equals("true", ignoreCase = true)) {
+            when (it.getString("result")) {
+                "1001" -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "شماره سریال یا رمز عبور اشتباه است.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+                "2000" -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "با موفقیت اضافه شد.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+
+                "1002" -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "سرور در دسترس نیست. لطفا دوباره امتحان کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+
+                else -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            it.toString(),
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+            }
+
+            if (it.getString("ok").equals("true", ignoreCase = true)) {
                 devices.add(
                     Device(
                         serialNumber = serialNumber,
@@ -62,14 +107,29 @@ class AddActivity : AppCompatActivity() {
                     )
                 )
                 saveToMemory()
-                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
                 startActivity(Intent(this, LocalActivity::class.java))
-
-            } else {
-                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
             }
         }, {
-            FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors("1000"))
+            when (it) {
+                is NoConnectionError -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "اینترنت قطع است. لطفا اینترنت سیم کارت یا شبکه وای فای را فعال کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+                else -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            it.toString(),
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+            }
         })
 
         jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
@@ -114,6 +174,7 @@ class AddActivity : AppCompatActivity() {
                 Scaffold(
                     topBar = { AppBar() },
                     content = { Content() },
+                    snackbarHost = { CustomSnackBar(state) },
                 )
             }
         }
@@ -129,18 +190,35 @@ class AddActivity : AppCompatActivity() {
             Button(
                 onClick = {
                     addNewDevice(serialNumber, password, name)
+                    devices.clear()
                     devices.add(
                         Device(
-                            serialNumber = "78945",
-                            password = "6789",
+                            serialNumber = "11111",
+                            password = "7777",
                             name = "یخچال",
+                            status = false
+                        )
+                    )
+                    devices.add(
+                        Device(
+                            serialNumber = "22222",
+                            password = "8888",
+                            name = "کولر آبی",
+                            status = false
+                        )
+                    )
+                    devices.add(
+                        Device(
+                            serialNumber = "33333",
+                            password = "9999",
+                            name = "پنکه",
                             status = false
                         )
                     )
                     saveToMemory()
                 },
                 modifier = Modifier
-                    .padding(top = 20.dp)
+                    .padding(top = 16.dp)
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text(text = "افزودن")
@@ -160,7 +238,7 @@ class AddActivity : AppCompatActivity() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "اضافه کردن", textAlign = TextAlign.Center,
+                        "اضافه کردن دستگاه جدید", textAlign = TextAlign.Center,
                     )
                 }
             },
@@ -175,9 +253,9 @@ class AddActivity : AppCompatActivity() {
                 serialNumber = it
             },
             modifier = Modifier
-                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "شماره سریال") }
+            label = { Text(text = "شماره سریال پریز را وارد کنید") }
         )
     }
 
@@ -189,9 +267,9 @@ class AddActivity : AppCompatActivity() {
                 password = it
             },
             modifier = Modifier
-                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "رمز عبور") }
+            label = { Text(text = "رمز عبور پریز را وارد کنید") }
         )
     }
 
@@ -203,9 +281,9 @@ class AddActivity : AppCompatActivity() {
                 name = it
             },
             modifier = Modifier
-                .padding(top = 10.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "یک نام دلخواه برای دستگاه انتخاب کنید") }
+            label = { Text(text = "نام دستگاه را وارد کنید (مانند کولر)") }
         )
     }
 }

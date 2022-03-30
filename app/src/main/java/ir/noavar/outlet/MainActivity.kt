@@ -19,17 +19,23 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
 import com.android.volley.DefaultRetryPolicy
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import ir.noavar.outlet.ui.theme.CustomSnackBar
 import ir.noavar.outlet.ui.theme.MyApplicationTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
     private var devices = mutableStateListOf<Device>()
+    private var state = SnackbarHostState()
 
     override fun onResume() {
         super.onResume()
@@ -52,12 +58,38 @@ class MainActivity : AppCompatActivity() {
 
         val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
 
-            val ok = it.getString("ok")
-            val msg = it.getString("result")
+            when (it.getString("result")) {
+                "2001" -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "فرمان ارسال شد.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+                "1002" -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "سرور در دسترس نیست. لطفا دوباره امتحان کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
 
-            if (ok.equals("true", ignoreCase = true)) {
+                else -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            it.toString(),
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+            }
 
-                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
+            if (it.getString("ok").equals("true", ignoreCase = true)) {
 
                 val deviceIndex = devices.indexOfLast { it1 ->
                     it1.serialNumber == serialNumber
@@ -68,12 +100,29 @@ class MainActivity : AppCompatActivity() {
                 devices.clear()
                 devices.addAll(temp)
                 saveToMemory()
-            } else {
-                FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors(msg))
             }
         }
         ) {
-            FunctionsClass.showErrorSnack(this, FunctionsClass.getServerErrors("1000"))
+            when (it) {
+                is NoConnectionError -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "اینترنت قطع است. لطفا اینترنت سیم کارت یا شبکه وای فای را فعال کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+                else -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            it.toString(),
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+            }
         }
         jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
             8000,
@@ -110,8 +159,9 @@ class MainActivity : AppCompatActivity() {
                 Scaffold(
                     topBar = { AppBar() },
                     content = { Content() },
+                    snackbarHost = { CustomSnackBar(state) },
                     floatingActionButton = { OpenCheckInButton() },
-                    floatingActionButtonPosition = FabPosition.Center
+                    floatingActionButtonPosition = FabPosition.Center,
                 )
             }
         }
@@ -122,7 +172,7 @@ class MainActivity : AppCompatActivity() {
 
         Column {
 
-            LazyColumn(modifier = Modifier.padding(top = 8.dp)) {
+            LazyColumn(modifier = Modifier.padding(top = 16.dp)) {
                 items(devices.size) { i ->
                     LazyColumnItem(i)
                 }
@@ -134,7 +184,7 @@ class MainActivity : AppCompatActivity() {
     fun LazyColumnItem(i: Int) {
         Row(
             modifier = Modifier
-                .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 .background(
                     MaterialTheme.colors.onPrimary,
                     shape = MaterialTheme.shapes.small
@@ -194,10 +244,11 @@ class MainActivity : AppCompatActivity() {
     fun OpenCheckInButton() {
         ExtendedFloatingActionButton(
             onClick = { startActivity(Intent(this, AddActivity::class.java)) },
-            text = { Text("اضافه کردن") },
+            text = { Text("اضافه کردن دستگاه جدید") },
             icon = { Icon(Icons.Filled.Add, contentDescription = "") },
             backgroundColor = MaterialTheme.colors.primary,
-            contentColor = MaterialTheme.colors.onPrimary
+            contentColor = MaterialTheme.colors.onPrimary,
+            modifier = Modifier.padding(bottom = 16.dp)
         )
     }
 }
