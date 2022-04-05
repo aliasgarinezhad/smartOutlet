@@ -1,16 +1,18 @@
 package ir.noavar.outlet
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -29,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-class AddActivity : AppCompatActivity() {
+class AddActivity : ComponentActivity() {
 
     private var devices = mutableListOf<Device>()
 
@@ -119,6 +121,8 @@ class AddActivity : AppCompatActivity() {
                             SnackbarDuration.Long
                         )
                     }
+                    //startActivity(Intent(this, LocalActivity::class.java))
+                    startActivity(Intent(this, DeviceSettingActivity::class.java))
                 }
                 else -> {
                     CoroutineScope(Dispatchers.Default).launch {
@@ -230,10 +234,11 @@ class AddActivity : AppCompatActivity() {
     fun AppBar() {
 
         TopAppBar(
-
             title = {
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 0.dp, end = 50.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -242,7 +247,16 @@ class AddActivity : AppCompatActivity() {
                     )
                 }
             },
+            navigationIcon = {
+                IconButton(onClick = { finish() }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_baseline_arrow_forward_24),
+                        contentDescription = ""
+                    )
+                }
+            }
         )
+
     }
 
     @Composable
