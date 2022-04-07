@@ -1,7 +1,9 @@
 package ir.noavar.outlet
 
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +19,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import ir.noavar.outlet.ui.theme.CustomSnackBar
@@ -28,40 +29,40 @@ import kotlinx.coroutines.launch
 
 class DeviceSettingActivity : ComponentActivity() {
 
-    //private var devices = mutableListOf<Device>()
-    private var localSSID by mutableStateOf("")
-    private var localPassword by mutableStateOf("")
     private var routerSSID by mutableStateOf("")
     private var routerPassword by mutableStateOf("")
     private var state = SnackbarHostState()
+    private var openConnectToDeviceDialog by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Page()
         }
-        //loadFromMemory()
     }
 
-    private fun addNewDevice(localSSID: String, localPassword: String, routerSSID: String, routerPassword: String) {
+    private fun addNewDevice(
+        routerSSID: String,
+        routerPassword: String
+    ) {
+
+        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        if(!wifiManager.isWifiEnabled) {
+            openConnectToDeviceDialog = true
+            return
+        }
 
         val apiUrl = "http://192.168.4.1/"
 
         val stringRequest = object : StringRequest(Method.POST, apiUrl, {
 
             startActivity(Intent(this, MainActivity::class.java))
+            finish()
 
         }, {
             when (it) {
                 is NoConnectionError -> {
-                    CoroutineScope(Dispatchers.Default).launch {
-                        state.showSnackbar(
-                            "ارتباط با پریز برقرار نیست. لطفا به شبکه وای فای پریز متصل شوید.",
-                            null,
-                            SnackbarDuration.Long
-                        )
-                    }
-                    startActivity(Intent(this, LocalActivity::class.java))
+                    openConnectToDeviceDialog = true
                 }
                 else -> {
                     CoroutineScope(Dispatchers.Default).launch {
@@ -75,7 +76,7 @@ class DeviceSettingActivity : ComponentActivity() {
             }
         }) {
             override fun getBody(): ByteArray {
-                return "local_name=smart_sw12&local_password=12345678&router_name=paradise1&router_password=12345678&setting".toByteArray()
+                return "local_name=smart_switch&local_password=12345678&router_name=$routerSSID&router_password=$routerPassword&save".toByteArray()
             }
         }
 
@@ -87,26 +88,6 @@ class DeviceSettingActivity : ComponentActivity() {
         Volley.newRequestQueue(this).add(stringRequest)
     }
 
-    /*private fun saveToMemory() {
-
-        val memory = PreferenceManager.getDefaultSharedPreferences(this)
-        val memoryEditor = memory.edit()
-
-        memoryEditor.putString("devices", Gson().toJson(devices).toString())
-
-        memoryEditor.apply()
-    }
-
-    private fun loadFromMemory() {
-
-        val type = object : TypeToken<List<Device>>() {}.type
-        val memory = PreferenceManager.getDefaultSharedPreferences(this)
-        devices = Gson().fromJson(
-            memory.getString("devices", ""),
-            type
-        ) ?: mutableListOf()
-    }
-*/
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             finish()
@@ -132,14 +113,16 @@ class DeviceSettingActivity : ComponentActivity() {
 
         Column(modifier = Modifier.fillMaxSize()) {
 
-            LocalSSIDTextField()
-            LocalPasswordTextField()
+            if (openConnectToDeviceDialog) {
+                AccountAlertDialog()
+            }
+
             RouterSSIDTextField()
             RouterPasswordTextField()
 
             Button(
                 onClick = {
-                    addNewDevice(localSSID, localPassword, routerSSID, routerPassword)
+                    addNewDevice(routerSSID, routerPassword)
                 },
                 modifier = Modifier
                     .padding(top = 16.dp)
@@ -180,34 +163,6 @@ class DeviceSettingActivity : ComponentActivity() {
     }
 
     @Composable
-    fun LocalSSIDTextField() {
-
-        OutlinedTextField(
-            value = localSSID, onValueChange = {
-                localSSID = it
-            },
-            modifier = Modifier
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-                .fillMaxWidth(),
-            label = { Text(text = "نام") }
-        )
-    }
-
-    @Composable
-    fun LocalPasswordTextField() {
-
-        OutlinedTextField(
-            value = localPassword, onValueChange = {
-                localPassword = it
-            },
-            modifier = Modifier
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-                .fillMaxWidth(),
-            label = { Text(text = "رمز عبور") }
-        )
-    }
-
-    @Composable
     fun RouterSSIDTextField() {
 
         OutlinedTextField(
@@ -217,7 +172,7 @@ class DeviceSettingActivity : ComponentActivity() {
             modifier = Modifier
                 .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "نام مودم") }
+            label = { Text(text = "نام وای فای خانگی (مودم ثابت)") }
         )
     }
 
@@ -231,8 +186,52 @@ class DeviceSettingActivity : ComponentActivity() {
             modifier = Modifier
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "رمز عبور مودم") }
+            label = { Text(text = "رمز وای فای خانگی") }
         )
     }
 
+    @Composable
+    fun AccountAlertDialog() {
+
+        AlertDialog(
+            onDismissRequest = {
+                openConnectToDeviceDialog = false
+            },
+            buttons = {
+
+                Column(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .height(180.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Text(
+                        text = "لطفا پریز را به برق متصل نموده و بعد از چند ثانیه، دکمه زیر را فشار داده و در لیست وای فای ها، به وای فای smart_switch با رمز 12345678 متصل شوید و به برنامه برگردید.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                openConnectToDeviceDialog = false
+                                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+                            },
+                        ) {
+                            Text(text = "اتصال به وای فای")
+                        }
+                    }
+                }
+            }
+        )
+    }
 }

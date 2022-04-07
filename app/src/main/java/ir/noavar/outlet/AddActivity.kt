@@ -1,10 +1,14 @@
 package ir.noavar.outlet
 
 import android.content.Intent
+import android.net.wifi.WifiNetworkSpecifier
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -40,6 +44,7 @@ class AddActivity : ComponentActivity() {
     private var name by mutableStateOf("")
     private var state = SnackbarHostState()
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -109,7 +114,7 @@ class AddActivity : ComponentActivity() {
                     )
                 )
                 saveToMemory()
-                startActivity(Intent(this, LocalActivity::class.java))
+                startActivity(Intent(this, DeviceSettingActivity::class.java))
             }
         }, {
             when (it) {
@@ -121,7 +126,6 @@ class AddActivity : ComponentActivity() {
                             SnackbarDuration.Long
                         )
                     }
-                    //startActivity(Intent(this, LocalActivity::class.java))
                     startActivity(Intent(this, DeviceSettingActivity::class.java))
                 }
                 else -> {
@@ -200,22 +204,6 @@ class AddActivity : ComponentActivity() {
                             serialNumber = "11111",
                             password = "7777",
                             name = "یخچال",
-                            status = false
-                        )
-                    )
-                    devices.add(
-                        Device(
-                            serialNumber = "22222",
-                            password = "8888",
-                            name = "کولر آبی",
-                            status = false
-                        )
-                    )
-                    devices.add(
-                        Device(
-                            serialNumber = "33333",
-                            password = "9999",
-                            name = "پنکه",
                             status = false
                         )
                     )
