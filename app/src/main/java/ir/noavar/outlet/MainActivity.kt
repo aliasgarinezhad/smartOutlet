@@ -20,10 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
-import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -51,36 +49,54 @@ class MainActivity : ComponentActivity() {
 
     private fun setOnOff(serialNumber: String, password: String, status: String) {
 
-        val apiUrl = "https://mamatirnoavar.ir/switchs/user_ma.php"
-        val jsonObject = JSONObject()
-        jsonObject.put("sn", serialNumber)
-        jsonObject.put("pass", password)
-        jsonObject.put("status", status)
-        jsonObject.put("request_type", "setonoff")
+        val apiUrl =
+            "http://mamatirnoavar.ir/switchs/setDeviceParameters.php"
 
-        val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
+        val jsonArrayRequest = object : StringRequest(Method.POST, apiUrl, {
 
-            when (it.getString("result")) {
-                "2001" -> {
+            when {
+                it.contains("1000") -> {
                     CoroutineScope(Dispatchers.Default).launch {
                         state.showSnackbar(
-                            "فرمان ارسال شد.",
-                            null,
-                            SnackbarDuration.Long
-                        )
-                    }
-                }
-                "1002" -> {
-                    CoroutineScope(Dispatchers.Default).launch {
-                        state.showSnackbar(
-                            "سرور در دسترس نیست. لطفا دوباره امتحان کنید.",
+                            "شماره سریال یا رمز عبور دستگاه اشتباه است.",
                             null,
                             SnackbarDuration.Long
                         )
                     }
                 }
 
+                it.contains("3000") -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "مشکلی در سرور پیش آمده است. لطفا دوباره امتحان کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+
+                it.contains("2000") -> {
+
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "فرمان با موفقیت ارسال شد",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+
+                    val deviceIndex = devices.indexOfLast { it1 ->
+                        it1.serialNumber == serialNumber
+                    }
+                    devices[deviceIndex].status = status == "1"
+                    val temp = mutableListOf<Device>()
+                    temp.addAll(devices)
+                    devices.clear()
+                    devices.addAll(temp)
+                    saveToMemory()
+                }
                 else -> {
+
                     CoroutineScope(Dispatchers.Default).launch {
                         state.showSnackbar(
                             it.toString(),
@@ -91,20 +107,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            if (it.getString("ok").equals("true", ignoreCase = true)) {
-
-                val deviceIndex = devices.indexOfLast { it1 ->
-                    it1.serialNumber == serialNumber
-                }
-                devices[deviceIndex].status = status.toBoolean()
-                val temp = mutableListOf<Device>()
-                temp.addAll(devices)
-                devices.clear()
-                devices.addAll(temp)
-                saveToMemory()
-            }
-        }
-        ) {
+        }, {
             when (it) {
                 is NoConnectionError -> {
                     CoroutineScope(Dispatchers.Default).launch {
@@ -125,12 +128,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }) {
+            override fun getBody(): ByteArray {
+                return "serialNumber=$serialNumber&password=$password&status=$status".toByteArray()
+            }
         }
-        jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
-            8000,
-            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        )
+
         Volley.newRequestQueue(this).add(jsonArrayRequest)
     }
 

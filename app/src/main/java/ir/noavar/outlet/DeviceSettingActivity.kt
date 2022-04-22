@@ -1,7 +1,6 @@
 package ir.noavar.outlet
 
 import android.content.Intent
-import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
@@ -17,10 +16,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.preference.PreferenceManager
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import ir.noavar.outlet.ui.theme.CustomSnackBar
 import ir.noavar.outlet.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
@@ -33,22 +35,55 @@ class DeviceSettingActivity : ComponentActivity() {
     private var routerPassword by mutableStateOf("")
     private var state = SnackbarHostState()
     private var openConnectToDeviceDialog by mutableStateOf(true)
+    private var devices = mutableListOf<Device>()
+    private var serialNumber = ""
+    private var password = ""
+    private var name = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Page()
         }
+        loadFromMemory()
+
+        serialNumber = intent.getStringExtra("serialNumber") ?: ""
+        password = intent.getStringExtra("password") ?: ""
+        name = intent.getStringExtra("name") ?: ""
     }
 
-    private fun addNewDevice(
-        routerSSID: String,
-        routerPassword: String
-    ) {
+    private fun checkDeviceAndUserData() {
 
-        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
-        if(!wifiManager.isWifiEnabled) {
-            openConnectToDeviceDialog = true
+        if (routerSSID == "") {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "لطفا نام وای فای خانگی را وارد کنید.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
+            return
+        }
+
+        if (routerPassword == "") {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "لطفا عبور وای فای خانگی را وارد کنید.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
+            return
+        }
+
+        if (routerPassword.length < 8) {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "رمز وای فای خانگی باید بیشتر از هشت رقم باشد.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
             return
         }
 
@@ -56,8 +91,7 @@ class DeviceSettingActivity : ComponentActivity() {
 
         val stringRequest = object : StringRequest(Method.POST, apiUrl, {
 
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+            addNewDevice(routerSSID, routerPassword, serialNumber, password, name)
 
         }, {
             when (it) {
@@ -76,7 +110,7 @@ class DeviceSettingActivity : ComponentActivity() {
             }
         }) {
             override fun getBody(): ByteArray {
-                return "local_name=smart_switch&local_password=12345678&router_name=$routerSSID&router_password=$routerPassword&save".toByteArray()
+                return "turn_off".toByteArray()
             }
         }
 
@@ -85,7 +119,104 @@ class DeviceSettingActivity : ComponentActivity() {
             DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
             DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         )
+
         Volley.newRequestQueue(this).add(stringRequest)
+    }
+
+    private fun addNewDevice(
+        routerSSID: String,
+        routerPassword: String,
+        serialNumber: String,
+        password: String,
+        name: String,
+    ) {
+
+        /*val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        if (!wifiManager.isWifiEnabled) {
+            openConnectToDeviceDialog = true
+            return
+        }*/
+
+        val apiUrl = "http://192.168.4.1/"
+
+        val stringRequest = object : StringRequest(Method.POST, apiUrl, {
+
+            devices.add(
+                Device(
+                    serialNumber = serialNumber,
+                    password = password,
+                    name = name
+                )
+            )
+            saveToMemory()
+
+            Intent(this, MainActivity::class.java).apply {
+                flags += Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(this)
+            }
+
+        }, {
+            when (it) {
+                is NoConnectionError -> {
+                    devices.add(
+                        Device(
+                            serialNumber = serialNumber,
+                            password = password,
+                            name = name
+                        )
+                    )
+                    saveToMemory()
+
+                    Intent(this, MainActivity::class.java).apply {
+                        flags += Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(this)
+                    }
+
+                    //openConnectToDeviceDialog = true
+                }
+                else -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            it.toString(),
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+            }
+        }) {
+            override fun getBody(): ByteArray {
+                return "local_name=smart_switch&local_password=12345678&router_name=$routerSSID&router_password=$routerPassword&save".toByteArray()
+            }
+        }
+
+        stringRequest.retryPolicy = DefaultRetryPolicy(
+            1000,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
+        Volley.newRequestQueue(this).add(stringRequest)
+    }
+
+    private fun loadFromMemory() {
+
+        val type = object : TypeToken<List<Device>>() {}.type
+        val memory = PreferenceManager.getDefaultSharedPreferences(this)
+        devices = Gson().fromJson(
+            memory.getString("devices", ""),
+            type
+        ) ?: mutableListOf()
+    }
+
+    private fun saveToMemory() {
+
+        val memory = PreferenceManager.getDefaultSharedPreferences(this)
+        val memoryEditor = memory.edit()
+
+        memoryEditor.putString("devices", Gson().toJson(devices).toString())
+
+        memoryEditor.apply()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -122,7 +253,7 @@ class DeviceSettingActivity : ComponentActivity() {
 
             Button(
                 onClick = {
-                    addNewDevice(routerSSID, routerPassword)
+                    checkDeviceAndUserData()
                 },
                 modifier = Modifier
                     .padding(top = 16.dp)
@@ -201,8 +332,8 @@ class DeviceSettingActivity : ComponentActivity() {
 
                 Column(
                     modifier = Modifier
-                        .width(320.dp)
-                        .height(180.dp),
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
 

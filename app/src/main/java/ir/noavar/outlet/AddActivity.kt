@@ -1,30 +1,27 @@
 package ir.noavar.outlet
 
 import android.content.Intent
-import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
-import com.android.volley.DefaultRetryPolicy
 import com.android.volley.NoConnectionError
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -33,16 +30,15 @@ import ir.noavar.outlet.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class AddActivity : ComponentActivity() {
-
-    private var devices = mutableListOf<Device>()
 
     private var serialNumber by mutableStateOf("")
     private var password by mutableStateOf("")
     private var name by mutableStateOf("")
     private var state = SnackbarHostState()
+    private var openIsDeviceConfigedDialog by mutableStateOf(false)
+    private var devices = mutableListOf<Device>()
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,17 +51,46 @@ class AddActivity : ComponentActivity() {
 
     private fun addNewDevice(serialNumber: String, password: String, name: String) {
 
-        val apiUrl = "https://mamatirnoavar.ir/switchs/user_ma.php"
+        if (serialNumber == "") {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "لطفا شماره سریال پریز را وارد کنید.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
+            return
+        }
 
-        val jsonObject = JSONObject()
-        jsonObject.put("sn", serialNumber)
-        jsonObject.put("pass", password)
-        jsonObject.put("request_type", "checkuserpassswitch")
+        if (password == "") {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "لطفا رمز عبور پریز را وارد کنید.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
+            return
+        }
 
-        val jsonArrayRequest = JsonObjectRequest(Request.Method.POST, apiUrl, jsonObject, {
+        if (name == "") {
+            CoroutineScope(Dispatchers.Default).launch {
+                state.showSnackbar(
+                    "لطفا نام دستگاه را وارد کنید.",
+                    null,
+                    SnackbarDuration.Long
+                )
+            }
+            return
+        }
 
-            when (it.getString("result")) {
-                "1001" -> {
+        val apiUrl =
+            "http://mamatirnoavar.ir/switchs/checkSerialNumberPassword.php"
+
+        val jsonArrayRequest = object : StringRequest(Method.POST, apiUrl, {
+
+            when {
+                it.contains("1000") -> {
                     CoroutineScope(Dispatchers.Default).launch {
                         state.showSnackbar(
                             "شماره سریال یا رمز عبور اشتباه است.",
@@ -74,7 +99,19 @@ class AddActivity : ComponentActivity() {
                         )
                     }
                 }
-                "2000" -> {
+
+                it.contains("3000") -> {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        state.showSnackbar(
+                            "مشکلی در سرور پیش آمده است. لطفا دوباره امتحان کنید.",
+                            null,
+                            SnackbarDuration.Long
+                        )
+                    }
+                }
+
+                it.contains("2000") -> {
+
                     CoroutineScope(Dispatchers.Default).launch {
                         state.showSnackbar(
                             "با موفقیت اضافه شد.",
@@ -82,19 +119,10 @@ class AddActivity : ComponentActivity() {
                             SnackbarDuration.Long
                         )
                     }
+                    openIsDeviceConfigedDialog = true
                 }
-
-                "1002" -> {
-                    CoroutineScope(Dispatchers.Default).launch {
-                        state.showSnackbar(
-                            "سرور در دسترس نیست. لطفا دوباره امتحان کنید.",
-                            null,
-                            SnackbarDuration.Long
-                        )
-                    }
-                }
-
                 else -> {
+
                     CoroutineScope(Dispatchers.Default).launch {
                         state.showSnackbar(
                             it.toString(),
@@ -105,17 +133,6 @@ class AddActivity : ComponentActivity() {
                 }
             }
 
-            if (it.getString("ok").equals("true", ignoreCase = true)) {
-                devices.add(
-                    Device(
-                        serialNumber = serialNumber,
-                        password = password,
-                        name = name
-                    )
-                )
-                saveToMemory()
-                startActivity(Intent(this, DeviceSettingActivity::class.java))
-            }
         }, {
             when (it) {
                 is NoConnectionError -> {
@@ -126,7 +143,6 @@ class AddActivity : ComponentActivity() {
                             SnackbarDuration.Long
                         )
                     }
-                    startActivity(Intent(this, DeviceSettingActivity::class.java))
                 }
                 else -> {
                     CoroutineScope(Dispatchers.Default).launch {
@@ -138,24 +154,13 @@ class AddActivity : ComponentActivity() {
                     }
                 }
             }
-        })
+        }) {
+            override fun getBody(): ByteArray {
+                return "serialNumber=$serialNumber&password=$password".toByteArray()
+            }
+        }
 
-        jsonArrayRequest.retryPolicy = DefaultRetryPolicy(
-            8000,
-            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        )
         Volley.newRequestQueue(this).add(jsonArrayRequest)
-    }
-
-    private fun saveToMemory() {
-
-        val memory = PreferenceManager.getDefaultSharedPreferences(this)
-        val memoryEditor = memory.edit()
-
-        memoryEditor.putString("devices", Gson().toJson(devices).toString())
-
-        memoryEditor.apply()
     }
 
     private fun loadFromMemory() {
@@ -166,6 +171,16 @@ class AddActivity : ComponentActivity() {
             memory.getString("devices", ""),
             type
         ) ?: mutableListOf()
+    }
+
+    private fun saveToMemory() {
+
+        val memory = PreferenceManager.getDefaultSharedPreferences(this)
+        val memoryEditor = memory.edit()
+
+        memoryEditor.putString("devices", Gson().toJson(devices).toString())
+
+        memoryEditor.apply()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -192,22 +207,17 @@ class AddActivity : ComponentActivity() {
     fun Content() {
 
         Column(modifier = Modifier.fillMaxSize()) {
+
+            if (openIsDeviceConfigedDialog) {
+                AccountAlertDialog()
+            }
+
             DeviceSerialNumberTextField()
             DevicePasswordTextField()
             DeviceNameTextField()
             Button(
                 onClick = {
                     addNewDevice(serialNumber, password, name)
-                    devices.clear()
-                    devices.add(
-                        Device(
-                            serialNumber = "11111",
-                            password = "7777",
-                            name = "یخچال",
-                            status = false
-                        )
-                    )
-                    saveToMemory()
                 },
                 modifier = Modifier
                     .padding(top = 16.dp)
@@ -251,13 +261,16 @@ class AddActivity : ComponentActivity() {
     fun DeviceSerialNumberTextField() {
 
         OutlinedTextField(
-            value = serialNumber, onValueChange = {
+            value = serialNumber,
+            onValueChange = {
                 serialNumber = it
             },
             modifier = Modifier
                 .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "شماره سریال پریز را وارد کنید") }
+            label = { Text(text = "شماره سریال پریز را وارد کنید") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
         )
     }
 
@@ -265,13 +278,16 @@ class AddActivity : ComponentActivity() {
     fun DevicePasswordTextField() {
 
         OutlinedTextField(
-            value = password, onValueChange = {
+            value = password,
+            onValueChange = {
                 password = it
             },
             modifier = Modifier
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "رمز عبور پریز را وارد کنید") }
+            label = { Text(text = "رمز عبور پریز را وارد کنید") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            singleLine = true,
         )
     }
 
@@ -279,13 +295,87 @@ class AddActivity : ComponentActivity() {
     fun DeviceNameTextField() {
 
         OutlinedTextField(
-            value = name, onValueChange = {
+            value = name,
+            onValueChange = {
                 name = it
             },
             modifier = Modifier
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .fillMaxWidth(),
-            label = { Text(text = "نام دستگاه را وارد کنید (مانند کولر)") }
+            label = { Text(text = "نام دستگاه را وارد کنید (مانند کولر)") },
+            singleLine = true,
+        )
+    }
+
+    @Composable
+    fun AccountAlertDialog() {
+
+        AlertDialog(
+            onDismissRequest = {
+                openIsDeviceConfigedDialog = false
+            },
+            buttons = {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Text(
+                        text = "آیا قبلا پریز را به اینترنت متصل کرده اید؟ در غیر این صورت وارد صفحه تنظیمات دستگاه شوید و نام و رمز عبور مودم خانگی تان را برای دستگاه تعریف کنید.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        style = MaterialTheme.typography.body1,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                openIsDeviceConfigedDialog = false
+                                devices.add(
+                                    Device(
+                                        serialNumber = serialNumber,
+                                        password = password,
+                                        name = name
+                                    )
+                                )
+                                saveToMemory()
+
+                                Intent(this@AddActivity, MainActivity::class.java).apply {
+                                    flags += Intent.FLAG_ACTIVITY_NEW_TASK
+                                    startActivity(this)
+                                }
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Text(text = "بله")
+                        }
+
+                        Button(
+                            onClick = {
+                                openIsDeviceConfigedDialog = false
+                                Intent(this@AddActivity, DeviceSettingActivity::class.java).apply {
+                                    this.putExtra("serialNumber", serialNumber)
+                                    this.putExtra("password", password)
+                                    this.putExtra("name", name)
+                                    startActivity(this)
+                                }
+                            },
+                        ) {
+                            Text(text = "خیر، ورود به تنظیمات دستگاه")
+                        }
+                    }
+                }
+            }
         )
     }
 }
