@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ir.noavar.outlet">
+    package="ir.noavar.smartoutlet">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -16,12 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".DeviceSettingActivity" />
+        <activity android:name="ir.noavar.smartoutlet.DeviceSettingActivity" />
         <activity
-            android:name=".AddActivity"
+            android:name="ir.noavar.smartoutlet.AddActivity"
             android:label="افزودن" />
         <activity
-            android:name=".MainActivity"
+            android:name="ir.noavar.smartoutlet.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

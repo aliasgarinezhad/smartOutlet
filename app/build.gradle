@@ -5,11 +5,11 @@ android {
     compileSdkVersion 32
 
     defaultConfig {
-        applicationId "ir.noavar.outlet"
+        applicationId "ir.noavar.smartoutlet"
         minSdkVersion 23
         targetSdkVersion 32
         versionCode 3
-        versionName "4.0.5"
+        versionName "4.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -1,4 +1,4 @@
-package ir.noavar.outlet
+package ir.noavar.smartoutlet
 
 import android.content.Intent
 import android.os.Bundle
@@ -23,8 +23,8 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import ir.noavar.outlet.ui.theme.CustomSnackBar
-import ir.noavar.outlet.ui.theme.MyApplicationTheme
+import ir.noavar.smartoutlet.ui.theme.CustomSnackBar
+import ir.noavar.smartoutlet.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

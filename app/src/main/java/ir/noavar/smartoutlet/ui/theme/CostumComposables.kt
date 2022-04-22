@@ -1,4 +1,4 @@
-package ir.noavar.outlet.ui.theme
+package ir.noavar.smartoutlet.ui.theme
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

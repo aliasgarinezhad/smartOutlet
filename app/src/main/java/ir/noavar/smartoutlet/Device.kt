@@ -1,4 +1,4 @@
-package ir.noavar.outlet
+package ir.noavar.smartoutlet
 
 data class Device(
     val serialNumber: String,

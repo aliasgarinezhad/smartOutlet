@@ -1,4 +1,4 @@
-package ir.noavar.outlet.ui.theme
+package ir.noavar.smartoutlet.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
