@@ -1,12 +1,10 @@
 package ir.noavar.outlet
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -37,10 +35,9 @@ class AddActivity : ComponentActivity() {
     private var password by mutableStateOf("")
     private var name by mutableStateOf("")
     private var state = SnackbarHostState()
-    private var openIsDeviceConfigedDialog by mutableStateOf(false)
+    private var openIsDeviceConfiguredDialog by mutableStateOf(false)
     private var devices = mutableListOf<Device>()
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -119,7 +116,7 @@ class AddActivity : ComponentActivity() {
                             SnackbarDuration.Long
                         )
                     }
-                    openIsDeviceConfigedDialog = true
+                    openIsDeviceConfiguredDialog = true
                 }
                 else -> {
 
@@ -208,7 +205,7 @@ class AddActivity : ComponentActivity() {
 
         Column(modifier = Modifier.fillMaxSize()) {
 
-            if (openIsDeviceConfigedDialog) {
+            if (openIsDeviceConfiguredDialog) {
                 AccountAlertDialog()
             }
 
@@ -312,7 +309,7 @@ class AddActivity : ComponentActivity() {
 
         AlertDialog(
             onDismissRequest = {
-                openIsDeviceConfigedDialog = false
+                openIsDeviceConfiguredDialog = false
             },
             buttons = {
 
@@ -340,7 +337,7 @@ class AddActivity : ComponentActivity() {
                     ) {
                         Button(
                             onClick = {
-                                openIsDeviceConfigedDialog = false
+                                openIsDeviceConfiguredDialog = false
                                 devices.add(
                                     Device(
                                         serialNumber = serialNumber,
@@ -362,7 +359,7 @@ class AddActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                openIsDeviceConfigedDialog = false
+                                openIsDeviceConfiguredDialog = false
                                 Intent(this@AddActivity, DeviceSettingActivity::class.java).apply {
                                     this.putExtra("serialNumber", serialNumber)
                                     this.putExtra("password", password)
