@@ -31,6 +31,6 @@ val Typography = Typography(
     h2 = TextStyle(
         fontFamily = FontFamily(Font(R.font.sans_regular)),
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp
+        fontSize = 18.sp
     ),
 )

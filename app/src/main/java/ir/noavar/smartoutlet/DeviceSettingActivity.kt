@@ -131,12 +131,6 @@ class DeviceSettingActivity : ComponentActivity() {
         name: String,
     ) {
 
-        /*val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
-        if (!wifiManager.isWifiEnabled) {
-            openConnectToDeviceDialog = true
-            return
-        }*/
-
         val apiUrl = "http://192.168.4.1/"
 
         val stringRequest = object : StringRequest(Method.POST, apiUrl, {
@@ -151,7 +145,7 @@ class DeviceSettingActivity : ComponentActivity() {
             saveToMemory()
 
             Intent(this, MainActivity::class.java).apply {
-                flags += Intent.FLAG_ACTIVITY_NEW_TASK
+                flags += Intent.FLAG_ACTIVITY_CLEAR_TOP
                 startActivity(this)
             }
 
@@ -168,11 +162,9 @@ class DeviceSettingActivity : ComponentActivity() {
                     saveToMemory()
 
                     Intent(this, MainActivity::class.java).apply {
-                        flags += Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        flags += Intent.FLAG_ACTIVITY_CLEAR_TOP
                         startActivity(this)
                     }
-
-                    //openConnectToDeviceDialog = true
                 }
                 else -> {
                     CoroutineScope(Dispatchers.Default).launch {

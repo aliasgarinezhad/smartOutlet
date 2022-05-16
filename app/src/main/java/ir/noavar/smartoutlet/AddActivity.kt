@@ -348,7 +348,7 @@ class AddActivity : ComponentActivity() {
                                 saveToMemory()
 
                                 Intent(this@AddActivity, MainActivity::class.java).apply {
-                                    flags += Intent.FLAG_ACTIVITY_NEW_TASK
+                                    flags += Intent.FLAG_ACTIVITY_CLEAR_TOP
                                     startActivity(this)
                                 }
                             },
